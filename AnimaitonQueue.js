@@ -18,22 +18,23 @@ export default class AnimationQueue{
         this.intervals = []
         this.isRunning = false
     }
-    start = () => {
+    start = (cb) => {
         this.isRunning = true
-        this.startAnimationRecursive(0)
+        this.startAnimationRecursive(0, cb)
     }
     abort = () => {
         this.isRunning = false
         this.clearTimeoutsAndIntervals()
     }
-    startAnimationRecursive = (sectionStartId) => {
+    startAnimationRecursive = (sectionStartId, cb) => {
         if(sectionStartId < this.animationSections.length){
             this.runAnimationSection(sectionStartId, ()=>{
                 if(sectionStartId+1 < this.animationSections.length && this.isRunning){
-                    this.startAnimationRecursive(sectionStartId+1)
+                    this.startAnimationRecursive(sectionStartId+1, cb)
                 }
                 else{
                     this.abort()
+                    if(cb) cb()
                 }
             })
         }
@@ -45,7 +46,7 @@ export default class AnimationQueue{
         let section = sectionId >= 0 && sectionId < this.animationSections.length ? this.animationSections[sectionId] : undefined
         let prevSection = sectionId > 0 && sectionId < this.animationSections.length ? this.animationSections[sectionId-1] : undefined
         if(section && this.isRunning){
-            let delay = section.delay != undefined && section.delay || (prevSection && prevSection.duration || 0)
+            let delay = section.delay !== undefined ? section.delay : (prevSection ? prevSection.duration : 0)
             this.setTimeoutMock(() => {
                 section.animation(() => {
                     this.clearTimeoutsAndIntervals()
